@@ -7,6 +7,7 @@ import socketserver
 import threading
 import socket
 import os
+from PIL import Image, ImageTk
 
 # Window configuration
 my_w = tk.Tk()
@@ -27,6 +28,12 @@ generate_button.place(relx=0.2, rely=0.5, anchor=CENTER)
 qrcode_label=tk.Label(my_w)
 qrcode_label.place(relx=0.6, rely=0.5, anchor=CENTER)
 
+host_name=tk.Label(my_w)
+host_name.place(relx=0.1, rely=0.6)
+
+host_url=tk.Label(my_w)
+host_url.place(relx=0.1, rely=0.7)
+
 # Server configuration
 PORT = 8010
 os.environ['USERPROFILE']
@@ -35,18 +42,19 @@ os.chdir(desktop)
 Handler = http.server.SimpleHTTPRequestHandler
 hostname = socket.gethostname()
 
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-link = "http://" + s.getsockname()[0] + ":" + str(PORT)
+socket_info = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+socket_info.connect(("8.8.8.8", 80))
+link = "http://" + socket_info.getsockname()[0] + ":" + str(PORT)
 
 def my_generate():
     global my_img
     my_qr = pyqrcode.create(link) 
-    my_qr = my_qr.xbm(scale=10)
-    my_img=tk.BitmapImage(data=my_qr)
+    my_qr.png("temp_qrcode.png", scale=10)
+    my_img=ImageTk.PhotoImage(Image.open("temp_qrcode.png").resize((250,250), Image.Resampling.LANCZOS))
     qrcode_label.config(image=my_img)
-    print(type(my_img), my_img)
-    
+    host_name.config(text=hostname)
+    host_url.config(text=link)   
+
 def serve_forever():
     Handler = http.server.SimpleHTTPRequestHandler
     httpd = socketserver.TCPServer(("", PORT), Handler)
